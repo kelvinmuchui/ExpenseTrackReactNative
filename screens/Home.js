@@ -217,10 +217,12 @@ import { COLORS, FONTS, SIZES, icons} from '../constants'
  ]
  
 const Home = () => {
+  const categoryListHeightAnimatedValue = useRef(new Animated.Value(115)).current;
 
     const [categories, setCategories] = React.useState(categoriesData)
-
+    const [ showMoreToggle ,setShowMoreToggle] = React.useState(false)
     const [viewMode, setViewMode] = React.useState("chart")
+    const[selectedCategory,setSelectedCategory] = React.useState( null)
     function renderNavBar(){
         return(
             <View
@@ -399,6 +401,218 @@ const Home = () => {
             </View>
         )
     }
+    function renderCategoryList() {
+        const renderItem = ({item}) => {
+            return(
+                <TouchableOpacity
+                style = {{
+                    flex: 1,
+                    flexDirection: 'row',
+                    margin: 5,
+                    paddingVertical : SIZES.radius,
+                    paddingHorizontal: SIZES.padding,
+                    borderRadius: 5,
+                    backgroundColor: COLORS.white,
+                    ...style.shadow,
+
+                }}
+                    onPress ={() => setSelectedCategory(item)}
+                >
+                    <Image
+                     source ={item.icon}
+                     style= {{
+                         width: 20,
+                         height:20,
+                         tintColor: item.color
+                     }}
+                    />
+                    <Text style ={{
+                        marginLeft:SIZES.base, 
+                        color: COLORS.primary, ...
+                        FONTS.h4
+                    }}> {item.name}</Text>
+                </TouchableOpacity>
+            )
+        }
+        return(
+             <View style ={{
+                 paddingHorizontal:SIZES.padding -5
+             }}>
+                 <Animated.View style = {{
+                     height: categoryListHeightAnimatedValue
+                 }}>
+                     <FlatList
+                        data ={categories}
+                        renderItem ={renderItem}
+                        keyExtractor={item => `${item.id}`}
+                        numColumns={2}
+                     />
+                 </Animated.View>
+                 <TouchableOpacity 
+                 style = {{
+                     flexDirection: 'row',
+                     marginVertical: SIZES.base,
+                     justifyContent: 'center'
+                
+
+                 }}
+                 onPress ={() => {
+                     if(showMoreToggle){
+                         Animated.timing(categoryListHeightAnimatedValue, {
+                             toValue: 115,
+                             duration: 300,
+                             useNativeDriver: false
+                         }).start()
+                     }else {
+                        Animated.timing(categoryListHeightAnimatedValue, {
+                            toValue: 172.5,
+                            duration: 300,
+                            useNativeDriver: false
+                        }).start()
+                     }
+                     setShowMoreToggle(!showMoreToggle)
+
+                 }}>
+                    <Text 
+                    style = {{
+                        ...FONTS.body4
+                    }}
+                    >  {showMoreToggle ? "LESS" : "MORE"}</Text>
+                    <Image 
+                        source = { showMoreToggle ? icons.up_arrow : icons.down_arrow }
+                        style = {{
+                            marginLeft: 5,  width: 15, height: 15, alignSelf: 'center'
+                        }}/>
+                 </TouchableOpacity>
+             </View>
+        )
+    }
+    function renderIncomingExpensesTitle(){
+        return(
+            <View style={{ padding: SIZES.padding, color:COLORS.lightGray2}}>
+                <Text style ={{...FONTS.h3, color: COLORS.primary}}>INCOMING EXPENSES</Text>
+                <Text  style ={{...FONTS.body4, color: COLORS.darkgray}}>12 Total</Text>
+
+            </View>
+        )
+    }
+
+    function renderIncomingExpenses(){
+        let allExpenses = selectedCategory ? selectedCategory.expenses : []
+        //Filter pending expenses
+        let incomingExpenses = allExpenses.filter(a => a.status == "P")
+        const renderItem = ({ item, index}) =>(
+            <View style = {{
+                width: 300,
+                marginRight: SIZES.padding,
+                marginLeft: index == 0 ? SIZES.padding : 0,
+                borderRadius: SIZES.radius,
+                backgroundColor: COLORS.white,
+                ...style.shadow
+            }}>
+                {/* Title */}
+                <View style = {{ 
+                    flexDirection: 'row',
+                    padding: SIZES.padding,
+                    alignItems: "center"}}>
+                    <View 
+                    style ={{
+                        height: 50,
+                        width: 50,
+                        borderRadius: 35,
+                        backgroundColor: COLORS.lightGray2,
+                        alignItems: 'center',
+                        marginRight: SIZES.base
+                    }}>
+                        <Image
+                        source = {selectedCategory.icon}
+                        style ={{
+                            width: 30,
+                            height: 30,
+                            tintColor: selectedCategory.color
+                        }}
+                        />
+                    </View>
+                    <Text style ={{
+                        ...FONTS.h3,
+                        color: selectedCategory.color
+                    }}>{selectedCategory.name}</Text>
+                </View>
+                {/* Expenses Description */}
+                <View style = {{
+                    paddingHorizontal:SIZES.padding
+                }}>
+                     <Text style ={{
+                         ...FONTS.h2}}>{item.title}</Text>
+                     <Text tyle ={{
+                         ...FONTS.body3, flexWrap: "warp", color: COLORS.darkgray}}>{item.description}</Text>
+                    {/* Location */}
+                    <Text style ={{
+                        marginTop: SIZES.padding, 
+                        ...FONTS.h4
+                    }}> Location</Text>
+                    <View style = {{
+                        flexDirection: 'row'
+                    }}>
+                        <Image
+                            source= {icons.pin}
+                            style= {{
+                                width: 20,
+                                height: 20,
+                                tintColor: COLORS.darkgray,
+                                marginRight: 5
+                            }}
+                        />
+                        <Text style = {{
+                            marginBottom: SIZES.base, 
+                            color: COLORS.darkgray,
+                            ...FONTS.body4
+
+                        }}>{item.location}</Text>
+                    </View>
+                </View>
+                {/* Price */}
+                <View style = {{
+                    height: 50,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderBottomStartRadius: SIZES.radius,
+                    borderBottomEndRadius: SIZES.radius,
+                    backgroundColor: selectedCategory.color
+                }}>
+                    <Text style = {{
+                        color: COLORS.white, ...FONTS.body3
+                    }}> CONFIRM {item.total.toFixed(2) * 100 } KSH</Text>
+                </View>
+            </View>
+        )
+        return (
+            <View>
+                {renderIncomingExpensesTitle()}
+
+                {
+                    incomingExpenses.length > 0 &&
+
+                    <FlatList
+                        data = {incomingExpenses}
+                        renderItem={renderItem}
+                        keyExtractor ={item =>`${item.id}`}
+                        horizontal
+                        showsHorizontalScrollIndicator = {false}
+                    
+                    />
+                }
+                {
+                    incomingExpenses.length == 0 &&
+                    <View style ={{ alignItems: 'center',
+                    justifyContent: 'center',
+                    height: 300}}>
+                        <Text style ={{color: COLORS.primary, ...FONTS.h3 }}>No Record</Text>
+                    </View>
+                }
+            </View>
+        )
+    }
     return(
         <View style={{flex:1, backgroundColor: COLORS.lightGray2}}>
             {renderNavBar()}
@@ -406,7 +620,35 @@ const Home = () => {
             {renderHeader()}
             {/* Category Header Section */}
             {renderCategoryHeaderSection()}
+            <ScrollView
+             contentContainerStyle = {{
+                 paddingBottom: 60
+            }}> 
+            {
+                viewMode == "list" &&
+                <View>
+                    {renderCategoryList()}
+                    {renderIncomingExpenses()}
+                </View>
+
+            }
+
+            </ScrollView>
         </View>
     )
 }
+
+
+const style = StyleSheet.create({
+    shadow: {
+        shadowColor: '#000',
+        shadowOffset:{
+            width:2,
+            height:2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation:3,
+    }
+})
 export default Home;
